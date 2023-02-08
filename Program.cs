@@ -20,53 +20,69 @@ namespace TaxiFarePrediction
 
             // Declare Job Variables 
             string currentDir = Environment.CurrentDirectory;
+            Console.WriteLine("\n Current Working Directory: \n" + currentDir);
             string myProjectDir = "C:\\Users\\edyar\\source\\repos\\TaxiFarePrediction";
+            Console.WriteLine("\n Data Directory: \n" + myProjectDir );
+            Console.WriteLine();
+
             string _trainDataPath = Path.Combine(myProjectDir, "Data", "taxi-fare-train.csv");
             string _testDataPath = Path.Combine(myProjectDir, "Data", "taxi-fare-test.csv");
             string _modelPath = Path.Combine(myProjectDir, "Data", "Model.zip");
 
 
-            MLContext mlContexto = new MLContext(seed: 0);
-            var model = Train(mlContexto, _trainDataPath);
+            MLContext mlContext = new MLContext(seed: 0);
+            var model = Train(mlContext, _trainDataPath);
+
+            Console.WriteLine();
             Console.WriteLine(model);
-            Evaluate(mlContexto, model);
-            TestSinglePrediction(mlContexto, model);
 
-            ITransformer Train(MLContext mlContext, string dataPath)
+            Evaluate(mlContext, model);
+            TestSinglePrediction(mlContext, model);
+
+            ITransformer Train(MLContext _mlContext, string _dataPath)
             {
-                IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(dataPath, hasHeader: true, separatorChar: ',');
-                var pipeline = mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "FareAmount")
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "VendorIdEncoded", inputColumnName: "VendorId"))
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "RateCodeEncoded", inputColumnName: "RateCode"))
-                .Append(mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "PaymentTypeEncoded", inputColumnName: "PaymentType"))
-                .Append(mlContext.Transforms.Concatenate("Features", "VendorIdEncoded", "RateCodeEncoded", "PassengerCount", "TripDistance", "PaymentTypeEncoded"))
-                .Append(mlContext.Regression.Trainers.FastTree());
+                Console.WriteLine( "  --  Entering Train()  --");
+                IDataView _dataView = _mlContext.Data.LoadFromTextFile<TaxiTrip>(_dataPath, hasHeader: true, separatorChar: ',');
+                var pipeline = _mlContext.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: "FareAmount")
+                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "VendorIdEncoded", inputColumnName: "VendorId"))
+                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "RateCodeEncoded", inputColumnName: "RateCode"))
+                .Append(_mlContext.Transforms.Categorical.OneHotEncoding(outputColumnName: "PaymentTypeEncoded", inputColumnName: "PaymentType"))
+                .Append(_mlContext.Transforms.Concatenate("Features", "VendorIdEncoded", "RateCodeEncoded", "PassengerCount", "TripDistance", "PaymentTypeEncoded"))
+                .Append(_mlContext.Regression.Trainers.FastTree());
 
-                var modelo = pipeline.Fit(dataView);
+                Console.WriteLine(_dataView);
+                var modelo = pipeline.Fit(_dataView);
+
+                Console.WriteLine("  --  Exiting Train()  --");
                 return modelo;
             }
 
 
-            void Evaluate(MLContext mlContext, ITransformer _model)
+            void Evaluate(MLContext _mlContext, ITransformer _model)
             {
-                IDataView dataView = mlContext.Data.LoadFromTextFile<TaxiTrip>(_testDataPath, hasHeader: true, separatorChar: ',');
-                var predictions = _model.Transform(dataView);
-                var metrics = mlContext.Regression.Evaluate(predictions, "Label", "Score");
+                Console.WriteLine("  --  Entering Evaluate()  --");
+                IDataView _dataView = _mlContext.Data.LoadFromTextFile<TaxiTrip>(_testDataPath, hasHeader: true, separatorChar: ',');
+                var _predictions = _model.Transform(_dataView);
+                var _metrics = _mlContext.Regression.Evaluate(_predictions, "Label", "Score");
+
                 Console.WriteLine();
                 Console.WriteLine($"*************************************************");
                 Console.WriteLine($"*       Model quality metrics evaluation         ");
                 Console.WriteLine($"*------------------------------------------------");
                 Console.WriteLine("\n");
-                Console.WriteLine($"*       RSquared Score:      {metrics.RSquared:0.##}");
-                Console.WriteLine($"*       Root Mean Squared Error:      {metrics.RootMeanSquaredError:#.##}");
+                Console.WriteLine($"*       RSquared Score:      {_metrics.RSquared:0.##}");
+                Console.WriteLine($"*       Root Mean Squared Error:      {_metrics.RootMeanSquaredError:#.##}");
                 Console.WriteLine("\n");
+                Console.WriteLine("  --  Exiting Evaluate()  --");
             }
 
-            void TestSinglePrediction(MLContext mlContext, ITransformer _model)
+            void TestSinglePrediction(MLContext _mlContext, ITransformer _model)
             {
-                var predictionFunction = mlContext.Model.CreatePredictionEngine<TaxiTrip, TaxiTripFarePrediction>(model);
+                Console.WriteLine("  --  Entering TestSinglePrediction()  --");
 
-                var taxiTripSample = new TaxiTrip()
+                var _predictionFunction = _mlContext.Model.CreatePredictionEngine<TaxiTrip, TaxiTripFarePrediction>(model);
+
+                var _taxiTripSample = new TaxiTrip()
                 {
                     VendorId = "VTS",
                     RateCode = "1",
@@ -77,11 +93,14 @@ namespace TaxiFarePrediction
                     FareAmount = 0 // To predict. Actual/Observed = 15.5
                 };
 
-                var prediction = predictionFunction.Predict(taxiTripSample);
+                var _prediction = _predictionFunction.Predict(_taxiTripSample);
 
                 Console.WriteLine($"**********************************************************************");
-                Console.WriteLine($"Predicted fare: {prediction.FareAmount:0.####}, actual fare: 15.5");
+                Console.WriteLine($"Predicted fare: {_prediction.FareAmount:0.####}, actual fare: 15.5");
                 Console.WriteLine($"**********************************************************************");
+
+                Console.WriteLine("  --  Exiting TestSinglePrediction()  --");
+
             }
 
             Console.WriteLine("\n");
