@@ -21,7 +21,7 @@ namespace TaxiFarePrediction
             // Declare Job Variables 
             string currentDir = Environment.CurrentDirectory;
             Console.WriteLine("\n Current Working Directory: \n" + currentDir);
-            string myProjectDir = "C:\\Users\\edyar\\source\\repos\\TaxiFarePrediction";
+            string myProjectDir = currentDir;
             Console.WriteLine("\n Data Directory: \n" + myProjectDir );
             Console.WriteLine();
 
